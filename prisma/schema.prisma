@@ -1,0 +1,84 @@
+// prisma/schema.prisma — ClipForge AI Database Schema with Campaign Presets
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  jobs      VideoJob[]
+}
+
+model VideoJob {
+  id           String    @id @default(cuid())
+  userId       String?
+  user         User?     @relation(fields: [userId], references: [id])
+
+  // Source & Preset
+  videoUrl     String?   // Target video URL (YouTube or external)
+  sourceType   String    @default("youtube") // "youtube" | "upload"
+  sourceUrl    String?   // Alias for videoUrl
+  sourceFile   String?   // uploaded local file path
+  preset       String    @default("GENERAL") // "VYRO" | "WHOP" | "SPORTS" | "GENERAL"
+
+  // Status: PENDING | PROCESSING | COMPLETED | FAILED
+  status       String    @default("PENDING")
+  errorMessage String?
+  progress     Int       @default(0) // 0-100
+
+  // Transcription & Analysis Metadata
+  transcriptPath  String?   // path to transcript JSON
+  transcriptText  String?   // raw text
+  analysisPath    String?   // path to analysis JSON
+
+  videoTitle      String?
+  videoDuration   Float?    // seconds
+  thumbnailPath   String?
+
+  // Timestamps
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  clips        Clip[]
+}
+
+model Clip {
+  id           String    @id @default(cuid())
+  jobId        String
+  job          VideoJob  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  // Preset & Meta
+  campaignType String    @default("GENERAL") // "VYRO" | "WHOP" | "SPORTS" | "GENERAL"
+  title        String
+  hookText     String?   // Attention-Grabbing Banner Hook
+  score        Float     // 1.0 - 10.0 (Float)
+  reasoning    String?
+
+  // Segment Timing
+  startTime    Float     // seconds
+  endTime      Float     // seconds
+  duration     Float     // seconds
+
+  // Outputs & Artifacts
+  outputUrl    String?   // Public/streaming URL or path
+  outputPath   String?   // Local MP4 path
+  transcript   String?   // Text transcript payload (.txt content or path)
+  srtPath      String?   // SRT captions path
+  thumbnailPath String?
+
+  // Status: PENDING | PROCESSING | COMPLETED | FAILED
+  status       String    @default("PENDING")
+  errorMessage String?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
