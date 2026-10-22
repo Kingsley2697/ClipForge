@@ -81,7 +81,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-violet-500 selection:text-white">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-violet-500 selection:text-white">
       <Navbar />
 
       {/* Main Container */}
@@ -90,19 +90,19 @@ export default function DashboardPage() {
         <div className="text-center space-y-4 max-w-3xl mx-auto pt-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-xs font-semibold text-violet-300 shadow-inner">
             <Sparkles className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: "3s" }} />
-            <span>Opus Clip + Miqla AI Architecture</span>
+            <span>From long-form to share-worthy</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-950 leading-tight">
             Turn Any Long Video Into{" "}
             <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent">
               Viral 9:16 Shorts
             </span>
           </h1>
 
-          <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            Automatic Whisper word-level transcription, Gemini AI viral moment detection,
-            smart 9:16 vertical crop framing, and dynamic animated burnt-in captions.
+          <p className="text-slate-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+            Transform long videos into polished, platform-ready clips with engaging captions
+            and framing tailored to where you publish.
           </p>
         </div>
 
@@ -128,7 +128,7 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <Flame className="w-5 h-5 text-amber-400" />
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold text-slate-950">
                     Generated Viral Clips ({activeClips.length})
                   </h2>
                 </div>
@@ -162,13 +162,13 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-slate-400" />
-                <h3 className="text-base font-bold text-white">Recent Repurposed Videos</h3>
+                <h3 className="text-base font-bold text-slate-950">Recent Repurposed Videos</h3>
               </div>
               <button
                 type="button"
                 onClick={fetchJobs}
                 disabled={isLoadingRecent}
-                className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="text-xs text-slate-500 hover:text-slate-950 flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isLoadingRecent ? "animate-spin" : ""}`} />
                 <span>Refresh</span>
@@ -206,6 +206,9 @@ export default function DashboardPage() {
                             {new Date(job.createdAt).toLocaleDateString()}
                           </span>
                           <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                            {job.aspectRatio || "9:16"}
+                          </span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-white/5 text-slate-400 border border-white/5">
                             {job.preset || "GENERAL"}
                           </span>
                         </div>
@@ -239,13 +242,13 @@ export default function DashboardPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-black/40 backdrop-blur-md py-8 mt-16">
+      <footer className="border-t border-slate-200 bg-white py-8 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-violet-400" />
-            <span className="text-slate-300 font-semibold">ClipForge AI Engine</span>
+            <span className="text-slate-700 font-semibold">ClipForge</span>
             <span>—</span>
-            <span>Next.js App Router • Whisper • Gemini 1.5 • FFmpeg • BullMQ</span>
+            <span>Creator tools for better video distribution</span>
           </div>
 
           <p>© 2026 ClipForge AI. All rights reserved.</p>

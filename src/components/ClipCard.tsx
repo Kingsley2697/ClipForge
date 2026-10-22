@@ -84,15 +84,28 @@ export function ClipCard({ clip, onDelete }: ClipCardProps) {
     }
   };
 
+  const getAspectClass = (ratio?: string) => {
+    switch (ratio) {
+      case "1:1":
+        return "aspect-[1/1]";
+      case "16:9":
+        return "aspect-[16/9]";
+      case "9:16":
+      default:
+        return "aspect-[9/16]";
+    }
+  };
+
   const scoreBadge = getScoreBadge(clip.score || 8.5);
   const presetBadge = getPresetBadge(clip.campaignType);
   const PresetIcon = presetBadge.icon;
   const formattedDuration = `${Math.round(clip.duration)}s`;
+  const aspectClass = getAspectClass(clip.aspectRatio);
 
   return (
     <div className="group relative flex flex-col rounded-3xl bg-slate-900/90 border border-white/10 overflow-hidden shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-violet-500/40 hover:-translate-y-1">
-      {/* 9:16 Video Preview Container */}
-      <div className="relative aspect-[9/16] w-full bg-slate-950 overflow-hidden">
+      {/* Video Preview Container with Dynamic Aspect Ratio */}
+      <div className={`relative ${aspectClass} w-full bg-slate-950 overflow-hidden`}>
         {clip.outputPath ? (
           <video
             ref={videoRef}
@@ -107,7 +120,7 @@ export function ClipCard({ clip, onDelete }: ClipCardProps) {
           <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-500">
             <Sparkles className="w-10 h-10 text-violet-500/40 animate-pulse mb-2" />
             <p className="text-xs font-semibold text-slate-300">Rendering Clip...</p>
-            <p className="text-[10px] text-slate-500 mt-1">Applying 9:16 crop & subtitles</p>
+            <p className="text-[10px] text-slate-500 mt-1">Applying {clip.aspectRatio || "9:16"} crop & subtitles</p>
           </div>
         )}
 
@@ -122,7 +135,7 @@ export function ClipCard({ clip, onDelete }: ClipCardProps) {
           <div className="flex items-center gap-1.5">
             <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border backdrop-blur-md flex items-center gap-1 ${presetBadge.color}`}>
               <PresetIcon className="w-3 h-3" />
-              <span>{presetBadge.label}</span>
+              <span>{clip.aspectRatio || "9:16"}</span>
             </div>
 
             <div className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-semibold text-slate-300">

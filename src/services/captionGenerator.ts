@@ -93,9 +93,12 @@ export function generatePlainTextTranscript(
   return lines.join("\n\n");
 }
 
+import { AspectRatio, getAspectDimensions } from "./videoProcessor";
+
 /**
  * Generate ASS (Advanced SubStation Alpha) with preset-specific fonts, colors,
- * high-contrast yellow/white highlights (VYRO/SPORTS), and top banner hook (WHOP).
+ * high-contrast yellow/white highlights (VYRO/SPORTS), top banner hook (WHOP),
+ * and dynamic resolution matching the selected AspectRatio.
  */
 export function generateASS(
   words: WordTimestamp[],
@@ -103,9 +106,9 @@ export function generateASS(
   clipEnd: number,
   preset: CampaignPreset = "GENERAL",
   hookText?: string,
-  videoWidth = 1080,
-  videoHeight = 1920
+  aspectRatio: AspectRatio = "9:16"
 ): string {
+  const { width: videoWidth, height: videoHeight } = getAspectDimensions(aspectRatio);
   const config = getPresetConfig(preset);
   const style = config.captionStyle;
   const captions = groupWordsIntoCaptions(words, clipStart, clipEnd, preset === "VYRO" ? 3 : 4);

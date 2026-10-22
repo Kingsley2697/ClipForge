@@ -10,12 +10,46 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  email     String     @unique
-  name      String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  jobs      VideoJob[]
+  id                 String        @id @default(cuid())
+  email              String        @unique
+  passwordHash       String
+  name               String?
+  subscriptionPlan   String        @default("FREE")
+  subscriptionStatus String        @default("inactive")
+  subscriptionEndsAt DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  jobs               VideoJob[]
+  sessions           Session[]
+  payments           Payment[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String   @default("flutterwave")
+  transactionRef    String   @unique
+  providerPaymentId String?  @unique
+  plan              String
+  amount            Int
+  currency          String   @default("USD")
+  status            String   @default("pending")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
 }
 
 model VideoJob {
@@ -29,6 +63,7 @@ model VideoJob {
   sourceUrl    String?   // Alias for videoUrl
   sourceFile   String?   // uploaded local file path
   preset       String    @default("GENERAL") // "VYRO" | "WHOP" | "SPORTS" | "GENERAL"
+  aspectRatio  String    @default("9:16")    // "9:16" | "1:1" | "16:9"
 
   // Status: PENDING | PROCESSING | COMPLETED | FAILED
   status       String    @default("PENDING")
@@ -58,6 +93,7 @@ model Clip {
 
   // Preset & Meta
   campaignType String    @default("GENERAL") // "VYRO" | "WHOP" | "SPORTS" | "GENERAL"
+  aspectRatio  String    @default("9:16")    // "9:16" | "1:1" | "16:9"
   title        String
   hookText     String?   // Attention-Grabbing Banner Hook
   score        Float     // 1.0 - 10.0 (Float)

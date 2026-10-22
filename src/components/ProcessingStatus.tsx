@@ -33,22 +33,22 @@ const STEPS = [
   {
     key: "transcribe",
     threshold: 30,
-    label: "Whisper Transcription",
-    desc: "Aligning word-level timestamps",
+    label: "Preparing captions",
+    desc: "Aligning your spoken moments",
     icon: Mic,
   },
   {
     key: "analyze",
     threshold: 55,
-    label: "Gemini Preset Analysis",
-    desc: "Scoring viral hooks & speech pacing",
+    label: "Finding highlights",
+    desc: "Identifying compelling moments and pacing",
     icon: BrainCircuit,
   },
   {
     key: "render",
     threshold: 80,
-    label: "FFmpeg 9:16 Render",
-    desc: "Cropping vertical & burning dynamic captions",
+    label: "Producing your clips",
+    desc: "Applying framing and captions for publishing",
     icon: Film,
   },
 ];

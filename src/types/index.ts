@@ -3,6 +3,8 @@ import { CampaignPreset } from "@/lib/presets";
 
 export type { CampaignPreset };
 
+export type AspectRatio = "9:16" | "1:1" | "16:9";
+
 export type JobStatus =
   | "PENDING"
   | "PROCESSING"
@@ -22,6 +24,7 @@ export interface Clip {
   id: string;
   jobId: string;
   campaignType: CampaignPreset;
+  aspectRatio: AspectRatio;
   title: string;
   hookText: string | null;
   score: number; // Float, e.g. 9.5
@@ -48,6 +51,7 @@ export interface VideoJob {
   sourceUrl: string | null;
   sourceFile: string | null;
   preset: CampaignPreset;
+  aspectRatio: AspectRatio;
   status: string;
   errorMessage: string | null;
   progress: number;

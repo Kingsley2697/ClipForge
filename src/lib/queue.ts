@@ -2,6 +2,7 @@
 import { Queue, Job, QueueEvents } from "bullmq";
 import { getRedisConfig } from "./redis";
 import { CampaignPreset } from "./presets";
+import { AspectRatio } from "@/types";
 
 export const VIDEO_QUEUE_NAME = "video-processing";
 
@@ -30,6 +31,7 @@ export interface VideoJobPayload {
   sourceUrl?: string;
   sourceFile?: string;
   preset?: CampaignPreset;
+  aspectRatio?: AspectRatio;
 }
 
 export interface ClipRenderPayload {
@@ -39,6 +41,7 @@ export interface ClipRenderPayload {
   startTime: number;
   endTime: number;
   preset: CampaignPreset;
+  aspectRatio?: AspectRatio;
   hookText?: string;
   srtContent: string;
 }

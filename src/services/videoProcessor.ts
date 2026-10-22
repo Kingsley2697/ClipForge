@@ -12,11 +12,47 @@ if (process.env.FFMPEG_PATH) {
   ffmpeg.setFfmpegPath(ffmpegPath);
 }
 
+export type AspectRatio = "9:16" | "1:1" | "16:9";
+
+/**
+ * Returns the FFmpeg crop & scale video filter graph for the chosen aspect ratio.
+ */
+export function getAspectCropFilter(aspectRatio: AspectRatio = "9:16"): string {
+  switch (aspectRatio) {
+    case "1:1":
+      // Instagram / Facebook Square: crop center 1080x1080
+      return "crop=min(iw\\,ih):min(iw\\,ih),scale=1080:1080";
+    case "16:9":
+      // YouTube Widescreen: scale maintaining 16:9 aspect ratio up to 1920x1080 with padding
+      return "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2";
+    case "9:16":
+    default:
+      // TikTok / Shorts / Reels: scale width to 1920, center crop 1080x1920
+      return "scale=1920:-2,crop=1080:1920:(iw-1080)/2:(ih-1920)/2";
+  }
+}
+
+/**
+ * Returns pixel dimensions for subtitles and thumbnail generation.
+ */
+export function getAspectDimensions(aspectRatio: AspectRatio = "9:16"): { width: number; height: number } {
+  switch (aspectRatio) {
+    case "1:1":
+      return { width: 1080, height: 1080 };
+    case "16:9":
+      return { width: 1920, height: 1080 };
+    case "9:16":
+    default:
+      return { width: 1080, height: 1920 };
+  }
+}
+
 export interface RenderOptions {
   inputPath: string;   // Source MP4
-  outputPath: string;  // Output 9:16 MP4
+  outputPath: string;  // Output MP4
   startTime: number;   // seconds
   endTime: number;     // seconds
+  aspectRatio?: AspectRatio;
   preset?: CampaignPreset;
   assPath?: string;    // ASS subtitles path (preferred)
   srtPath?: string;    // SRT subtitles path (fallback)
@@ -24,8 +60,8 @@ export interface RenderOptions {
 }
 
 /**
- * Render a 9:16 vertical clip with burnt-in captions and preset-specific
- * modifiers (e.g. 1.02x speed for SPORTS).
+ * Render a clip with burnt-in captions, aspect ratio cropping (9:16, 1:1, 16:9),
+ * and preset-specific modifiers (e.g. 1.02x speed for SPORTS).
  */
 export async function renderVerticalClip(
   options: RenderOptions
@@ -35,6 +71,7 @@ export async function renderVerticalClip(
     outputPath,
     startTime,
     endTime,
+    aspectRatio = "9:16",
     preset = "GENERAL",
     assPath,
     srtPath,
@@ -47,8 +84,8 @@ export async function renderVerticalClip(
   const config = getPresetConfig(preset);
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 
-  // 1. Center crop to 9:16 (1080x1920)
-  const scaleFilter = "scale=1920:-2,crop=1080:1920:(iw-1080)/2:(ih-1920)/2";
+  // 1. Get aspect ratio crop filter
+  const scaleFilter = getAspectCropFilter(aspectRatio);
 
   // 2. Subtitle filter
   const subtitlePath = assPath || srtPath;

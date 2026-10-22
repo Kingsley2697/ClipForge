@@ -7,6 +7,7 @@ import { getRedisConfig } from "../lib/redis";
 import { VIDEO_QUEUE_NAME, VideoJobPayload } from "../lib/queue";
 import { prisma } from "../lib/prisma";
 import { CampaignPreset, getPresetConfig } from "../lib/presets";
+import { AspectRatio } from "../types";
 import { downloadYouTubeVideo } from "../services/downloader";
 import { transcribeVideo, saveTranscription } from "../services/transcriber";
 import { analyzeViralMoments, saveAnalysis } from "../services/analyzer";
@@ -49,8 +50,9 @@ async function updateJobStatus(
 // --------- Pipeline Worker Implementation ---------
 
 async function processVideoJob(job: Job<VideoJobPayload>): Promise<void> {
-  const { jobId, sourceType, sourceUrl, sourceFile, preset = "GENERAL" } = job.data;
+  const { jobId, sourceType, sourceUrl, sourceFile, preset = "GENERAL", aspectRatio = "9:16" } = job.data;
   const campaignPreset = (preset || "GENERAL") as CampaignPreset;
+  const targetAspectRatio = (aspectRatio || "9:16") as AspectRatio;
   const presetConfig = getPresetConfig(campaignPreset);
 
   const jobUploadDir = path.join(UPLOAD_DIR, jobId);
@@ -58,7 +60,7 @@ async function processVideoJob(job: Job<VideoJobPayload>): Promise<void> {
   fs.mkdirSync(jobUploadDir, { recursive: true });
   fs.mkdirSync(jobOutputDir, { recursive: true });
 
-  console.log(`[Worker] Starting job ${jobId} | Mode: ${campaignPreset} (${sourceType})`);
+  console.log(`[Worker] Starting job ${jobId} | Mode: ${campaignPreset} | Ratio: ${targetAspectRatio} (${sourceType})`);
 
   try {
     // ── Step 1: Ingest source video ──────────────────────────────────
@@ -118,6 +120,7 @@ async function processVideoJob(job: Job<VideoJobPayload>): Promise<void> {
         data: {
           jobId,
           campaignType: campaignPreset,
+          aspectRatio: targetAspectRatio,
           title: seg.title,
           hookText: seg.hookText,
           score: seg.score,
@@ -130,7 +133,7 @@ async function processVideoJob(job: Job<VideoJobPayload>): Promise<void> {
       });
     }
 
-    // ── Step 5: Render 9:16 Clips with Preset Filters & Captions ───────
+    // ── Step 5: Render Clips with Preset Filters, Aspect Ratio & Captions ──
     const clips = await prisma.clip.findMany({ where: { jobId } });
     const total = clips.length;
 
@@ -153,13 +156,14 @@ async function processVideoJob(job: Job<VideoJobPayload>): Promise<void> {
       );
       saveCaptionFile(srtContent, srtPath);
 
-      // Generate ASS styled for this Campaign Preset (includes top banner hook for WHOP, yellow highlights for VYRO/SPORTS)
+      // Generate ASS styled for this Campaign Preset & Aspect Ratio
       const assContent = generateASS(
         transcript.words,
         clip.startTime,
         clip.endTime,
         campaignPreset,
-        clip.hookText || undefined
+        clip.hookText || undefined,
+        targetAspectRatio
       );
       saveCaptionFile(assContent, assPath);
 
@@ -186,12 +190,13 @@ async function processVideoJob(job: Job<VideoJobPayload>): Promise<void> {
       });
 
       try {
-        console.log(`[Worker - ${campaignPreset}] Rendering clip ${i + 1}/${total} [${clip.startTime}s - ${clip.endTime}s]`);
+        console.log(`[Worker - ${campaignPreset}] Rendering clip ${i + 1}/${total} [${clip.startTime}s - ${clip.endTime}s] (${targetAspectRatio})`);
         await renderVerticalClip({
           inputPath: videoPath,
           outputPath: clipOutputPath,
           startTime: clip.startTime,
           endTime: clip.endTime,
+          aspectRatio: targetAspectRatio,
           preset: campaignPreset,
           assPath,
           onProgress: (pct) => {

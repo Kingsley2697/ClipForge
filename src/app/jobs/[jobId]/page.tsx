@@ -50,7 +50,7 @@ function JobDetailContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -58,7 +58,7 @@ function JobDetailContent() {
         <div>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-950 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Dashboard</span>
@@ -66,13 +66,13 @@ function JobDetailContent() {
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
             <Loader2 className="w-8 h-8 text-violet-500 animate-spin mb-3" />
             <p className="text-sm">Loading video job details...</p>
           </div>
         ) : !job ? (
-          <div className="text-center py-20 text-slate-400">
-            <p className="text-lg font-semibold text-white">Job not found</p>
+          <div className="text-center py-20 text-slate-500">
+            <p className="text-lg font-semibold text-slate-950">Job not found</p>
             <Link
               href="/"
               className="mt-4 inline-block px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold"
@@ -83,7 +83,7 @@ function JobDetailContent() {
         ) : (
           <>
             {/* Header / Meta */}
-            <div className="p-6 rounded-3xl bg-slate-900/60 border border-white/10 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span
@@ -100,16 +100,19 @@ function JobDetailContent() {
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
                     {job.preset || "GENERAL"} MODE
                   </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-slate-300 border border-white/15">
+                    {job.aspectRatio || "9:16"}
+                  </span>
                   <span className="text-xs text-slate-400 uppercase tracking-widest font-semibold">
                     {job.sourceType}
                   </span>
                 </div>
 
-                <h1 className="text-2xl font-black text-white">
+                <h1 className="text-2xl font-black text-slate-950">
                   {job.videoTitle || "Untitled Video Processing Job"}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{new Date(job.createdAt).toLocaleString()}</span>
@@ -142,9 +145,9 @@ function JobDetailContent() {
             {/* Clips Section */}
             {clips.length > 0 && (
               <div className="space-y-6">
-                <div className="flex items-center gap-2 border-b border-white/10 pb-4">
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-4">
                   <Flame className="w-5 h-5 text-amber-400" />
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold text-slate-950">
                     9:16 Viral Shorts ({clips.length})
                   </h2>
                 </div>
@@ -171,7 +174,7 @@ export default function JobDetailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+        <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
         </div>
       }
