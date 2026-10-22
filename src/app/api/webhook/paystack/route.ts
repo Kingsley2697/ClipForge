@@ -66,12 +66,18 @@ export async function POST(request: Request) {
       const baseline = user?.subscriptionEndsAt && user.subscriptionEndsAt > new Date()
         ? user.subscriptionEndsAt
         : new Date();
+      const subscriptionStartedAt = new Date(baseline);
       const subscriptionEndsAt = new Date(baseline);
       subscriptionEndsAt.setMonth(subscriptionEndsAt.getMonth() + 1);
 
       await tx.user.update({
         where: { id: payment.userId },
-        data: { subscriptionPlan: payment.plan, subscriptionStatus: "active", subscriptionEndsAt },
+        data: {
+          subscriptionPlan: payment.plan,
+          subscriptionStatus: "active",
+          subscriptionStartedAt,
+          subscriptionEndsAt,
+        },
       });
     });
 

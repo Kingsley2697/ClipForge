@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import Link from "next/link";
 import { AlertCircle, ArrowRight, Briefcase, FileVideo, Globe, Loader2, Monitor, Sparkles, Square, Smartphone, Trophy, Upload, Zap } from "lucide-react";
 import { CampaignPreset } from "@/lib/presets";
 import { AspectRatio } from "@/types";
@@ -44,15 +45,20 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionExpired, setSubscriptionExpired] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const submit = async (body: BodyInit, isJson = false) => {
     setError(null);
+    setSubscriptionExpired(false);
     setIsSubmitting(true);
     try {
       const response = await fetch("/api/process", { method: "POST", headers: isJson ? { "Content-Type": "application/json" } : undefined, body });
       const data = await response.json();
+      if (response.status === 403 && data.code === "SUBSCRIPTION_EXPIRED") {
+        setSubscriptionExpired(true);
+      }
       if (!response.ok) throw new Error(data.error || "Unable to create video job.");
       onJobCreated(data.id);
     } catch (submissionError) {
@@ -129,7 +135,7 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
       </div>
       <div className="p-4 sm:p-6">
         {tab === "youtube" ? <form onSubmit={submitYoutube} className="space-y-4"><div className="relative"><YoutubeIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-red-500" /><input type="url" value={youtubeUrl} onChange={(event) => setYoutubeUrl(event.target.value)} disabled={isSubmitting} placeholder="Paste a YouTube link" className="w-full rounded-2xl border border-white/10 bg-slate-950/80 py-4 pl-12 pr-5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-500" /></div><div className="flex flex-col items-center justify-between gap-3 pt-2 sm:flex-row"><span className="text-xs text-slate-400">Output: <b className="text-violet-300">{selectedAspect}</b> · {selectedPreset} mode</span><button disabled={isSubmitting || !youtubeUrl.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-amber-500 px-6 py-3.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>Process clips</span><ArrowRight className="h-4 w-4" /></>}</button></div></form> : <div className="space-y-4"><input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={(event) => selectFile(event.target.files?.[0])} /><button type="button" onClick={() => fileInputRef.current?.click()} onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={(event) => { event.preventDefault(); setIsDragging(false); selectFile(event.dataTransfer.files?.[0]); }} className={`flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition ${isDragging ? "border-violet-500 bg-violet-500/10" : "border-white/10 bg-slate-950/40 hover:border-violet-500/50"}`}><FileVideo className="mb-3 h-7 w-7 text-violet-400" /><b className="text-sm text-white">{file ? file.name : "Click to upload or drag a video here"}</b><span className="mt-1 text-xs text-slate-400">MP4, MOV or WEBM</span></button><button type="button" onClick={submitFile} disabled={isSubmitting || !file} className="ml-auto flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-amber-500 px-6 py-3.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>Process {selectedAspect} clips</span><ArrowRight className="h-4 w-4" /></>}</button></div>}
-        {error && <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />{error}</div>}
+        {error && <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" /><div><p>{error}</p>{subscriptionExpired && <Link href="/pricing?expired=1" className="mt-2 inline-flex font-bold text-violet-200 underline underline-offset-4 hover:text-white">View plans and resubscribe</Link>}</div></div>}
       </div>
     </section>
   </div>;

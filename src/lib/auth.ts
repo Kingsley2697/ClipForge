@@ -73,6 +73,26 @@ export async function getCurrentUser() {
   return session.user;
 }
 
+export async function getSubscriptionAccess(user: {
+  id: string;
+  subscriptionStatus: string;
+  subscriptionEndsAt: Date | null;
+}) {
+  const now = new Date();
+  const isActive = user.subscriptionStatus === "active"
+    && user.subscriptionEndsAt !== null
+    && user.subscriptionEndsAt > now;
+
+  if (!isActive && user.subscriptionEndsAt && user.subscriptionEndsAt <= now && user.subscriptionStatus !== "expired") {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { subscriptionStatus: "expired" },
+    });
+  }
+
+  return { isActive, subscriptionEndsAt: user.subscriptionEndsAt };
+}
+
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");

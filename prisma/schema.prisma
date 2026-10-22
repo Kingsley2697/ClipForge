@@ -16,6 +16,7 @@ model User {
   name               String?
   subscriptionPlan   String        @default("FREE")
   subscriptionStatus String        @default("inactive")
+  subscriptionStartedAt DateTime?
   subscriptionEndsAt DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt

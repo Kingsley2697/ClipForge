@@ -8,7 +8,7 @@ import path from "path";
 import { writeFile } from "fs/promises";
 import { mkdirSync } from "fs";
 import { randomUUID } from "crypto";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSubscriptionAccess } from "@/lib/auth";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
@@ -71,6 +71,14 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const subscription = await getSubscriptionAccess(user);
+    if (!subscription.isActive) {
+      return NextResponse.json({
+        error: "Your subscription has expired. Subscribe again to continue creating clips.",
+        code: "SUBSCRIPTION_EXPIRED",
+        subscriptionEndsAt: subscription.subscriptionEndsAt,
+      }, { status: 403 });
+    }
     const contentType = req.headers.get("content-type") || "";
 
     let sourceType: "youtube" | "upload";
