@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
-import { createFlutterwaveCheckout, PLANS } from "@/lib/flutterwave";
+import { createPaystackCheckout, PLANS } from "@/lib/paystack";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({ plan: z.enum(["BASIC", "PRO"]) });
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     const { plan } = schema.parse(await request.json());
     const selectedPlan = PLANS[plan];
-    const transactionRef = `clipforge_${user.id}_${randomUUID()}`;
+    const transactionRef = `clipforge-${user.id}-${randomUUID()}`;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 
     await prisma.payment.create({
@@ -22,16 +22,17 @@ export async function POST(request: Request) {
         userId: user.id,
         transactionRef,
         plan,
-        amount: selectedPlan.amount,
+        amount: selectedPlan.amountInSubunit,
         currency: selectedPlan.currency,
+        provider: "paystack",
       },
     });
 
-    const checkoutUrl = await createFlutterwaveCheckout({
-      txRef: transactionRef,
+    const checkoutUrl = await createPaystackCheckout({
+      reference: transactionRef,
       email: user.email,
       plan,
-      redirectUrl: `${appUrl}/pricing?checkout=complete`,
+      callbackUrl: `${appUrl}/pricing?checkout=complete`,
     });
 
     return NextResponse.json({ checkoutUrl });

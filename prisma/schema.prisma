@@ -38,7 +38,7 @@ model Session {
 model Payment {
   id                String   @id @default(cuid())
   userId            String
-  provider          String   @default("flutterwave")
+  provider          String   @default("paystack")
   transactionRef    String   @unique
   providerPaymentId String?  @unique
   plan              String
