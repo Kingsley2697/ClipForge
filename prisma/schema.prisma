@@ -66,6 +66,10 @@ model VideoJob {
   preset       String    @default("GENERAL") // "VYRO" | "WHOP" | "SPORTS" | "GENERAL"
   aspectRatio  String    @default("9:16")    // "9:16" | "1:1" | "16:9"
 
+  // Transition Options
+  transitionStyle    String  @default("fade") // xfade transition name or "none"
+  transitionDuration Float   @default(0.4)    // seconds
+
   // Status: PENDING | PROCESSING | COMPLETED | FAILED
   status       String    @default("PENDING")
   errorMessage String?

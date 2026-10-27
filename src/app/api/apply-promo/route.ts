@@ -6,11 +6,11 @@ import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
   code: z.string().trim().min(1).max(100),
-  planType: z.enum(["BASIC", "PRO"]),
+  planType: z.enum(["BASIC", "PRO"]).optional(),
 });
 
 function getPromoCodes() {
-  const configuredCodes = process.env.PROMO_CODES || "VIPFRIEND,FOUNDER100";
+  const configuredCodes = process.env.PROMO_CODES || "VIPFRIEND,FREEPRO2026";
   return new Set(
     configuredCodes
       .split(",")
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { code, planType } = schema.parse(await request.json());
+    const { code } = schema.parse(await request.json());
     if (!getPromoCodes().has(code.toUpperCase())) {
       return NextResponse.json({ success: false, message: "Invalid promo code" }, { status: 400 });
     }
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       await tx.user.update({
         where: { id: user.id },
         data: {
-          subscriptionPlan: planType,
+          subscriptionPlan: "PRO",
           subscriptionStatus: "active",
           subscriptionStartedAt: new Date(baseline),
           subscriptionEndsAt,
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         data: {
           userId: user.id,
           transactionRef: `promo-${user.id}-${randomUUID()}`,
-          plan: planType,
+          plan: "PRO",
           amount: 0,
           currency: "USD",
           provider: "promo",
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       });
     });
 
-    return NextResponse.json({ success: true, message: "Promo applied successfully!" });
+    return NextResponse.json({ success: true, message: "Promo applied successfully! Pro access is active." });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

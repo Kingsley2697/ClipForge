@@ -24,6 +24,7 @@ import {
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const OUTPUT_DIR = path.join(process.cwd(), "public", "outputs");
+const WORKER_CONCURRENCY = Number.parseInt(process.env.WORKER_CONCURRENCY || "1", 10);
 
 // --------- Helpers ---------
 
@@ -50,7 +51,17 @@ async function updateJobStatus(
 // --------- Pipeline Worker Implementation ---------
 
 async function processVideoJob(job: Job<VideoJobPayload>): Promise<void> {
-  const { jobId, sourceType, sourceUrl, sourceFile, preset = "GENERAL", aspectRatio = "9:16" } = job.data;
+  const {
+    jobId,
+    sourceType,
+    sourceUrl,
+    sourceFile,
+    preset = "GENERAL",
+    aspectRatio = "9:16",
+    transitionStyle = "fade",
+    transitionDuration = 0.4,
+    creativeEdit,
+  } = job.data;
   const campaignPreset = (preset || "GENERAL") as CampaignPreset;
   const targetAspectRatio = (aspectRatio || "9:16") as AspectRatio;
   const presetConfig = getPresetConfig(campaignPreset);
@@ -60,7 +71,7 @@ async function processVideoJob(job: Job<VideoJobPayload>): Promise<void> {
   fs.mkdirSync(jobUploadDir, { recursive: true });
   fs.mkdirSync(jobOutputDir, { recursive: true });
 
-  console.log(`[Worker] Starting job ${jobId} | Mode: ${campaignPreset} | Ratio: ${targetAspectRatio} (${sourceType})`);
+  console.log(`[Worker] Starting job ${jobId} | Mode: ${campaignPreset} | Ratio: ${targetAspectRatio} (${sourceType})${creativeEdit?.enabled ? " | Creative Edit" : ""}`);
 
   try {
     // ── Step 1: Ingest source video ──────────────────────────────────
@@ -199,6 +210,9 @@ async function processVideoJob(job: Job<VideoJobPayload>): Promise<void> {
           aspectRatio: targetAspectRatio,
           preset: campaignPreset,
           assPath,
+          transitionStyle,
+          transitionDuration,
+          creativeEdit,
           onProgress: (pct) => {
             const overallProgress =
               60 + Math.round(((i + pct / 100) / total) * 35);
@@ -248,8 +262,11 @@ const worker = new Worker<VideoJobPayload>(
   processVideoJob,
   {
     connection: getRedisConfig(),
-    concurrency: 2,
+    // Video downloads, AI requests, and FFmpeg rendering are resource-intensive.
+    // Start one at a time locally; production can increase this through WORKER_CONCURRENCY.
+    concurrency: WORKER_CONCURRENCY,
     limiter: { max: 10, duration: 60_000 },
+    maxStalledCount: 1,
   }
 );
 
@@ -267,7 +284,12 @@ worker.on("error", (err) => {
 
 console.log(`[BullMQ] ClipForge AI Video Worker listening on queue: ${VIDEO_QUEUE_NAME}`);
 
-process.on("SIGTERM", async () => {
+async function shutdown(signal: string) {
+  console.log(`[BullMQ] Received ${signal}; waiting for active work to finish.`);
   await worker.close();
+  await prisma.$disconnect();
   process.exit(0);
-});
+}
+
+process.once("SIGTERM", () => void shutdown("SIGTERM"));
+process.once("SIGINT", () => void shutdown("SIGINT"));

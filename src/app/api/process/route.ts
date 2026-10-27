@@ -1,7 +1,7 @@
 // src/app/api/process/route.ts — Unified Video Processing API Route
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { enqueueVideoJob } from "@/lib/queue";
+import { CreativeEditOptions, enqueueVideoJob } from "@/lib/queue";
 import { CampaignPreset } from "@/lib/presets";
 import { AspectRatio } from "@/types";
 import { z } from "zod";
@@ -13,12 +13,46 @@ import { getCurrentUser, getSubscriptionAccess } from "@/lib/auth";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
+const CreativeEditSchema = z.object({
+  enabled: z.boolean().default(false),
+  speed: z.union([z.literal(0.98), z.literal(1), z.literal(1.02)]).default(1),
+  colorGrade: z.boolean().default(false),
+  mirror: z.boolean().default(false),
+  pitchSemitones: z.union([z.literal(-1), z.literal(0), z.literal(1)]).default(0),
+  commentaryVolume: z.number().min(0).max(1).default(1),
+  backgroundAudioVolume: z.number().min(0).max(1).default(0.2),
+});
+
+const DEFAULT_CREATIVE_EDIT: CreativeEditOptions = {
+  enabled: false,
+  speed: 1,
+  colorGrade: false,
+  mirror: false,
+  pitchSemitones: 0,
+  commentaryVolume: 1,
+  backgroundAudioVolume: 0.2,
+};
+
+function parseCreativeEdit(value: unknown): CreativeEditOptions {
+  if (value === undefined || value === null || value === "") {
+    return { ...DEFAULT_CREATIVE_EDIT };
+  }
+
+  const parsedValue = typeof value === "string" ? JSON.parse(value) : value;
+  return CreativeEditSchema.parse(parsedValue);
+}
+
 const ProcessJobSchema = z.object({
   videoUrl: z.string().url().optional(),
   sourceUrl: z.string().url().optional(),
   sourceType: z.enum(["youtube", "upload"]).default("youtube"),
   preset: z.enum(["VYRO", "WHOP", "SPORTS", "GENERAL"]).default("GENERAL"),
   aspectRatio: z.enum(["9:16", "1:1", "16:9"]).default("9:16"),
+  /** FFmpeg xfade transition name, e.g. "fade", "wipeleft", "circlecrop" or "none" */
+  transitionStyle: z.string().trim().default("fade"),
+  /** xfade duration in seconds */
+  transitionDuration: z.coerce.number().min(0.1).max(3).default(0.4),
+  creativeEdit: CreativeEditSchema.default(DEFAULT_CREATIVE_EDIT),
 });
 
 // ── GET /api/process ─────────────────────────────────────────────────────────
@@ -86,12 +120,20 @@ export async function POST(req: NextRequest) {
     let sourceFile: string | undefined;
     let preset: CampaignPreset = "GENERAL";
     let aspectRatio: AspectRatio = "9:16";
+    let transitionStyle = "fade";
+    let transitionDuration = 0.4;
+    let creativeEdit: CreativeEditOptions = { ...DEFAULT_CREATIVE_EDIT };
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       const file = formData.get("file") as File | null;
       const formPreset = formData.get("preset") as string | null;
       const formAspect = formData.get("aspectRatio") as string | null;
+      const formTransitionStyle = formData.get("transitionStyle") as string | null;
+      const formTransitionDuration = formData.get("transitionDuration") as string | null;
+      const formCreativeEdit = formData.get("creativeEdit");
+      const backgroundAudio = formData.get("backgroundAudio");
+      const formSourceUrl = formData.get("sourceUrl") as string | null;
 
       if (formPreset && ["VYRO", "WHOP", "SPORTS", "GENERAL"].includes(formPreset.toUpperCase())) {
         preset = formPreset.toUpperCase() as CampaignPreset;
@@ -101,22 +143,46 @@ export async function POST(req: NextRequest) {
         aspectRatio = formAspect as AspectRatio;
       }
 
-      if (!file) {
-        return NextResponse.json({ error: "No video file provided" }, { status: 400 });
+      if (formTransitionStyle) {
+        transitionStyle = formTransitionStyle.trim();
+      }
+
+      if (formTransitionDuration) {
+        const parsed = parseFloat(formTransitionDuration);
+        if (!isNaN(parsed) && parsed >= 0.1 && parsed <= 3) transitionDuration = parsed;
+      }
+
+      creativeEdit = parseCreativeEdit(formCreativeEdit);
+
+      if (!file && !formSourceUrl) {
+        return NextResponse.json({ error: "Provide a video file or source URL." }, { status: 400 });
       }
 
       const jobId = randomUUID();
       const uploadDir = path.join(UPLOAD_DIR, jobId);
       mkdirSync(uploadDir, { recursive: true });
 
-      const ext = path.extname(file.name) || ".mp4";
-      const filePath = path.join(uploadDir, `${jobId}${ext}`);
+      if (file) {
+        const ext = path.extname(file.name) || ".mp4";
+        const filePath = path.join(uploadDir, `${jobId}${ext}`);
+        await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+        sourceType = "upload";
+        sourceFile = filePath;
+      } else {
+        videoUrl = z.string().url().parse(formSourceUrl);
+        sourceType = "youtube";
+      }
 
-      const buffer = Buffer.from(await file.arrayBuffer());
-      await writeFile(filePath, buffer);
+      if (creativeEdit.enabled && backgroundAudio instanceof File && backgroundAudio.size > 0) {
+        if (!backgroundAudio.type.startsWith("audio/")) {
+          return NextResponse.json({ error: "Background audio must be an audio file." }, { status: 400 });
+        }
 
-      sourceType = "upload";
-      sourceFile = filePath;
+        const audioExt = path.extname(backgroundAudio.name) || ".mp3";
+        const backgroundAudioPath = path.join(uploadDir, `background-${randomUUID()}${audioExt}`);
+        await writeFile(backgroundAudioPath, Buffer.from(await backgroundAudio.arrayBuffer()));
+        creativeEdit.backgroundAudioPath = backgroundAudioPath;
+      }
 
       const job = await prisma.videoJob.create({
         data: {
@@ -124,6 +190,8 @@ export async function POST(req: NextRequest) {
           userId: user.id,
           sourceType,
           sourceFile,
+          videoUrl,
+          sourceUrl: videoUrl,
           preset,
           aspectRatio,
           status: "PENDING",
@@ -134,8 +202,12 @@ export async function POST(req: NextRequest) {
         jobId,
         sourceType,
         sourceFile,
+        sourceUrl: videoUrl,
         preset,
         aspectRatio,
+        transitionStyle,
+        transitionDuration,
+        creativeEdit,
       });
 
       return NextResponse.json(job, { status: 201 });
@@ -155,6 +227,9 @@ export async function POST(req: NextRequest) {
       videoUrl = targetUrl;
       preset = parsed.preset;
       aspectRatio = parsed.aspectRatio;
+      transitionStyle = parsed.transitionStyle;
+      transitionDuration = parsed.transitionDuration;
+      creativeEdit = parsed.creativeEdit;
 
       const job = await prisma.videoJob.create({
         data: {
@@ -174,6 +249,9 @@ export async function POST(req: NextRequest) {
         sourceUrl: videoUrl,
         preset,
         aspectRatio,
+        transitionStyle,
+        transitionDuration,
+        creativeEdit,
       });
 
       return NextResponse.json(job, { status: 201 });

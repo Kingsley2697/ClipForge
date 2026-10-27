@@ -7,6 +7,7 @@ import fs from "fs";
 const execAsync = promisify(exec);
 
 const YTDLP_PATH = process.env.YTDLP_PATH || "yt-dlp";
+const YTDLP_TIMEOUT_MS = Number.parseInt(process.env.YTDLP_TIMEOUT_MS || "900000", 10);
 
 export interface DownloadResult {
   filePath: string;
@@ -45,11 +46,16 @@ export async function downloadYouTubeVideo(
 
   let stdout: string;
   try {
-    const result = await execAsync(cmd, { maxBuffer: 10 * 1024 * 1024 });
+    const result = await execAsync(cmd, {
+      maxBuffer: 10 * 1024 * 1024,
+      timeout: YTDLP_TIMEOUT_MS,
+      killSignal: "SIGKILL",
+    });
     stdout = result.stdout;
   } catch (err: unknown) {
     const error = err as { stderr?: string; message?: string };
-    throw new Error(`yt-dlp failed: ${error.stderr || error.message}`);
+    const message = error.stderr || error.message || "Unknown yt-dlp error";
+    throw new Error(`yt-dlp failed: ${message}`);
   }
 
   // Parse the JSON metadata line (last non-empty JSON line)
@@ -83,7 +89,11 @@ export async function downloadYouTubeVideo(
 export async function getVideoInfo(url: string): Promise<{ title: string; duration: number }> {
   const cmd = `${YTDLP_PATH} --print-json --skip-download "${url}"`;
   try {
-    const { stdout } = await execAsync(cmd, { maxBuffer: 5 * 1024 * 1024 });
+    const { stdout } = await execAsync(cmd, {
+      maxBuffer: 5 * 1024 * 1024,
+      timeout: YTDLP_TIMEOUT_MS,
+      killSignal: "SIGKILL",
+    });
     const meta = JSON.parse(stdout.trim());
     return { title: meta.title || "Untitled", duration: meta.duration || 0 };
   } catch {
