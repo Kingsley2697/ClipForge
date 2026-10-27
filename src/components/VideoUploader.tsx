@@ -233,12 +233,12 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
     <div className="mx-auto w-full max-w-4xl space-y-6">
 
       {/* ── Aspect Ratio ──────────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 shadow-2xl backdrop-blur-xl sm:p-5">
+      <section className="rounded-3xl border border-slate-500/70 bg-slate-700 p-4 shadow-xl sm:p-5">
         <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300">
+          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-100">
             <Smartphone className="h-4 w-4 text-violet-400" />Target Platform &amp; Aspect Ratio
           </label>
-          <span className="text-[11px] text-slate-400">Choose the layout that fits where you&apos;ll publish</span>
+          <span className="text-[11px] text-slate-200">Choose the layout that fits where you&apos;ll publish</span>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {aspectOptions.map((option) => {
@@ -249,15 +249,15 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
                 key={option.id}
                 type="button"
                 onClick={() => setSelectedAspect(option.id)}
-                className={`flex items-start gap-3 rounded-2xl border p-3 text-left transition ${selected ? "border-violet-500 bg-violet-600/20 ring-1 ring-violet-500/50" : "border-white/10 bg-slate-950/60 hover:border-white/20"}`}
+                className={`flex items-start gap-3 rounded-2xl border p-3 text-left transition ${selected ? "border-violet-300 bg-violet-600/50 ring-1 ring-violet-300/70" : "border-slate-500 bg-slate-800 hover:border-violet-300/70"}`}
               >
-                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${selected ? "bg-violet-500 text-white" : "bg-white/5 text-slate-400"}`}>
+                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${selected ? "bg-violet-300 text-slate-950" : "bg-slate-700 text-slate-100"}`}>
                   <span className={`block rounded-[3px] border-2 border-current ${ratioPreviewClasses[option.id]}`} aria-hidden="true" />
                   <span className="sr-only"><Icon /></span>
                 </span>
                 <span>
                   <b className="block text-xs text-white">{option.name}</b>
-                  <small className="mt-0.5 block text-[11px] text-slate-400">{option.description}</small>
+                  <small className="mt-0.5 block text-[11px] text-slate-200">{option.description}</small>
                 </span>
               </button>
             );
@@ -282,21 +282,21 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
                 key={option.id}
                 type="button"
                 onClick={() => setSelectedPreset(option.id)}
-                className={`relative overflow-hidden rounded-2xl border p-3.5 text-left transition ${selected ? "border-violet-500 bg-violet-600/20 ring-1 ring-violet-500/50" : "border-white/10 bg-slate-900/80 hover:border-white/20"}`}
+                className={`relative overflow-hidden rounded-2xl border p-3.5 text-left transition ${selected ? "border-violet-300 bg-violet-600/45 ring-1 ring-violet-300/70" : "border-slate-500 bg-slate-700 hover:border-violet-300/70 hover:bg-slate-600"}`}
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <span className={`grid h-9 w-9 place-items-center overflow-hidden rounded-lg ${selected ? "bg-violet-500 text-white" : "bg-white/5 text-slate-400"}`}>
+                  <span className={`grid h-9 w-9 place-items-center overflow-hidden rounded-lg ${selected ? "bg-violet-300 text-slate-950" : "bg-slate-600 text-slate-100"}`}>
                     {option.imageUrl
                       ? <img src={option.imageUrl} alt={option.creatorName || "Campaign creator"} className="h-full w-full object-cover" loading="lazy" />
                       : <Icon className="h-4 w-4" />}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <small className="text-[9px] font-semibold text-amber-300">{option.creatorName}</small>
-                    <small className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${selected ? "border border-violet-500/40 bg-violet-500/30 text-violet-100" : "border border-white/5 bg-white/5 text-slate-400"}`}>{option.badge}</small>
+                    <small className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${selected ? "border border-violet-200/60 bg-violet-300/30 text-white" : "border border-slate-400/60 bg-slate-600 text-slate-100"}`}>{option.badge}</small>
                   </span>
                 </div>
                 <b className="text-xs text-white">{option.name}</b>
-                <p className="mt-1 text-[11px] leading-snug text-slate-400">{option.description}</p>
+                <p className="mt-1 text-[11px] leading-snug text-slate-200">{option.description}</p>
               </button>
             );
           })}
@@ -304,7 +304,7 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
       </section>
 
       {/* ── Transition Options ────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 shadow-2xl backdrop-blur-xl sm:p-5">
+      <section className="rounded-3xl border border-slate-500/70 bg-slate-700 p-4 shadow-xl sm:p-5">
         {/* Header */}
         <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <label
@@ -314,13 +314,13 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
             <span className="text-base leading-none" aria-hidden="true">🎬</span>
             Transition Options
           </label>
-          <span className="text-[11px] text-slate-400">Controls FFmpeg xfade effect between video cuts</span>
+          <span className="text-[11px] text-slate-200">Controls FFmpeg xfade effect between video cuts</span>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto]">
           {/* Preset dropdown */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="transition-preset-select" className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <label htmlFor="transition-preset-select" className="text-[11px] font-semibold uppercase tracking-wider text-slate-100">
               Effect Preset
             </label>
             <div className="relative">
@@ -348,7 +348,7 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
 
           {/* Custom transition name input */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="custom-transition-input" className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <label htmlFor="custom-transition-input" className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-100">
               <Pencil className="h-3 w-3" />
               Custom Transition Name
             </label>
@@ -396,7 +396,7 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
 
           {/* Duration input */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="transition-duration-input" className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <label htmlFor="transition-duration-input" className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-100">
               <Clock className="h-3 w-3" />
               Duration (s)
             </label>
@@ -432,11 +432,11 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 shadow-2xl backdrop-blur-xl sm:p-5">
+      <section className="rounded-3xl border border-slate-500/70 bg-slate-700 p-4 shadow-xl sm:p-5">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-sm font-bold text-white">Creative Edit Options</h2>
-            <p className="mt-1 text-[11px] leading-relaxed text-slate-400">Optional styling for media you have the rights to use.</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-slate-200">Optional styling for media you have the rights to use.</p>
           </div>
           <button
             type="button"
@@ -505,19 +505,19 @@ export function VideoUploader({ onJobCreated }: VideoUploaderProps) {
       </section>
 
       {/* ── Source Input ──────────────────────────────────────────────────── */}
-      <section className="relative rounded-3xl border border-white/10 bg-slate-900/80 p-2 shadow-2xl backdrop-blur-xl">
-        <div className="flex gap-2 rounded-2xl border border-white/5 bg-black/40 p-1.5">
+      <section className="relative rounded-3xl border border-slate-500/70 bg-slate-700 p-2 shadow-xl">
+        <div className="flex gap-2 rounded-2xl border border-slate-500 bg-slate-900 p-1.5">
           <button
             type="button"
             onClick={() => { setTab("youtube"); setError(null); }}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ${tab === "youtube" ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white" : "text-slate-400 hover:bg-white/5"}`}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ${tab === "youtube" ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white" : "text-slate-100 hover:bg-slate-800"}`}
           >
             <YoutubeIcon className="h-4 w-4 text-red-400" />YouTube URL
           </button>
           <button
             type="button"
             onClick={() => { setTab("upload"); setError(null); }}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ${tab === "upload" ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white" : "text-slate-400 hover:bg-white/5"}`}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ${tab === "upload" ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white" : "text-slate-100 hover:bg-slate-800"}`}
           >
             <Upload className="h-4 w-4 text-violet-400" />Upload video
           </button>
